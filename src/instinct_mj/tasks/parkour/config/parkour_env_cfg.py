@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 
 import mujoco
-from mjlab.terrains import FlatPatchSamplingCfg
 from mjlab.utils.spec_config import MaterialCfg, TextureCfg
 
 from instinct_mj.terrains.height_field.hf_terrains_cfg import (
@@ -15,7 +14,10 @@ from instinct_mj.terrains.height_field.hf_terrains_cfg import (
     PerlinSquareGapTerrainCfg,
 )
 from instinct_mj.terrains.trimesh import PerlinMeshRandomMultiBoxTerrainCfg
-from instinct_mj.terrains.terrain_generator_cfg import FiledTerrainGeneratorCfg
+from instinct_mj.terrains.terrain_generator_cfg import (
+    FiledTerrainGeneratorCfg,
+    MultiRadiusFlatPatchSamplingCfg as FlatPatchSamplingCfg,
+)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -31,7 +33,7 @@ ROUGH_TERRAINS_CFG = FiledTerrainGeneratorCfg(
     border_width=3.0,
     num_rows=10,
     num_cols=20,
-    horizontal_scale=0.05,
+    horizontal_scale=0.1,
     vertical_scale=0.005,
     slope_threshold=1.0,
     curriculum=True,
@@ -227,7 +229,7 @@ ROUGH_TERRAINS_CFG = FiledTerrainGeneratorCfg(
         ),
         "mesh_boxes": PerlinMeshRandomMultiBoxTerrainCfg(
             proportion=0.10,
-            box_height_mean=[0.1, 0.4],
+            box_height_mean=(0.1, 0.4),
             box_height_range=0.05,
             box_length_mean=0.4,
             box_length_range=0.1,

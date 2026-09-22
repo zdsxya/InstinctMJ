@@ -109,7 +109,7 @@ class MotionReferenceManagerCfg(SensorCfg):
     ### Data Augmentation ###
     symmetric_augmentation_joint_mapping: Sequence[int] | None = None
     """ the joint indices to augment the motion data symmetrically. """
-    symmetric_augmentation_joint_reverse_buf: Sequence | None = None
+    symmetric_augmentation_joint_reverse_buf: Sequence[int] | None = None
     """ the joint indices to augment the motion data symmetrically,
         If None, no symmetric augmentation is performed.
     """

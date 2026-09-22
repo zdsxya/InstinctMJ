@@ -5,6 +5,7 @@ import mujoco
 import numpy as np
 from mjlab.terrains import SubTerrainCfg as SubTerrainBaseCfg
 from instinct_mj.terrains.height_field.hf_terrains_cfg import PerlinPlaneTerrainCfg
+from instinct_mj.terrains.terrain_generator_cfg import MultiRadiusFlatPatchSamplingCfg
 
 
 from . import mesh_terrains
@@ -22,6 +23,7 @@ class WallTerrainCfgMixin:
 class PerlinMeshRandomMultiBoxTerrainCfg(SubTerrainBaseCfg, WallTerrainCfgMixin):
     """Configuration for a sub-terrain with multiple random boxes and optional Perlin noise."""
 
+    flat_patch_sampling: dict[str, MultiRadiusFlatPatchSamplingCfg] | None = None
     box_height_mean: tuple[float, float] | float = MISSING
     box_height_range: float = MISSING
     box_length_mean: tuple[float, float] | float = MISSING

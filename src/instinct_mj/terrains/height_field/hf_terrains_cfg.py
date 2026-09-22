@@ -6,9 +6,10 @@ from typing import List
 import mujoco
 import numpy as np
 import trimesh
-from mjlab.terrains.terrain_generator import FlatPatchSamplingCfg, SubTerrainCfg, TerrainGeometry, TerrainOutput
+from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainGeometry, TerrainOutput
 from scipy import ndimage
 
+from ..terrain_generator_cfg import MultiRadiusFlatPatchSamplingCfg as FlatPatchSamplingCfg
 from .utils import convert_height_field_to_mesh
 
 
