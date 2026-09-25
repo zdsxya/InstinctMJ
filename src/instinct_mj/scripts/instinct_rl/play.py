@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -85,6 +86,33 @@ class _ViewerEnvAdapter:
 
     def close(self):
         return self._vec_env.close()
+
+
+class _JoinedNativeMujocoViewer(NativeMujocoViewer):
+    """Finish passive rendering before Python's GLFW exit handlers run."""
+
+    def setup(self) -> None:
+        import mujoco.viewer
+
+        existing_threads = set(threading.enumerate())
+        self._render_threads = []
+        try:
+            super().setup()
+        finally:
+            # MuJoCo's Handle.close() only requests exit and does not expose
+            # the daemon thread. Keep only render threads started by this
+            # viewer, so unrelated workers are never joined.
+            self._render_threads = [
+                thread for thread in threading.enumerate()
+                if thread not in existing_threads
+                and getattr(thread, "_target", None) is mujoco.viewer._launch_internal
+            ]
+
+    def close(self) -> None:
+        super().close()
+        for thread in self._render_threads:
+            thread.join()
+        self._render_threads = []
 
 
 def _resolve_device(device: str | None) -> str:
@@ -516,7 +544,7 @@ def run_play(task_id: str, cfg: PlayConfig) -> None:
     rollout_steps = _resolve_rollout_steps(cfg)
 
     if viewer_backend == "native":
-        viewer = NativeMujocoViewer(viewer_env, policy)
+        viewer = _JoinedNativeMujocoViewer(viewer_env, policy)
         _patch_world_free_camera(viewer)
         _force_viewer_realtime_1x(viewer)
         viewer.run(num_steps=rollout_steps)

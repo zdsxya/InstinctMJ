@@ -87,6 +87,10 @@ Registered task IDs:
 
 - `Instinct-Locomotion-Flat-G1-v0`
 - `Instinct-Locomotion-Flat-G1-Play-v0`
+- `Instinct-Locomotion-Mild-G1-v0`
+- `Instinct-Locomotion-Mild-G1-Play-v0`
+- `Instinct-Locomotion-Mild-Walk-G1-v0`
+- `Instinct-Locomotion-Mild-Walk-G1-Play-v0`
 - `Instinct-BeyondMimic-Plane-G1-v0`
 - `Instinct-BeyondMimic-Plane-G1-Play-v0`
 - `Instinct-Shadowing-WholeBody-Plane-G1-v0`
@@ -110,6 +114,12 @@ uv run instinct-list-envs shadowing
 ```
 
 ## Quick Start
+
+For discrete deformable-ground contact with the flat G1 policy and ordinary PPO
+(no VAE), see [MILD contact setup and commands](docs/mild-contact.md).
+
+For alternating forward walking with the same MILD contact solver and additional
+gait rewards, see [MILD walking setup and evaluation](docs/mild-walk.md).
 
 Train:
 

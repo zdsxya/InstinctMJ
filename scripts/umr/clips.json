@@ -1,0 +1,20 @@
+[
+  {"id": "walk_slow_01", "source": "120/120_19_stageii.npz", "start": 8, "end": 11, "kind": "walk"},
+  {"id": "walk_slow_02", "source": "120/120_19_stageii.npz", "start": 17, "end": 20, "kind": "walk"},
+  {"id": "walk_slow_03", "source": "120/120_19_stageii.npz", "start": 34, "end": 37, "kind": "walk"},
+  {"id": "walk_slow_04", "source": "120/120_19_stageii.npz", "start": 51, "end": 54, "kind": "walk"},
+  {"id": "walk_normal_01", "source": "120/120_20_stageii.npz", "start": 5, "end": 8, "kind": "walk"},
+  {"id": "walk_normal_02", "source": "120/120_20_stageii.npz", "start": 16, "end": 19, "kind": "walk"},
+  {"id": "walk_normal_03", "source": "120/120_20_stageii.npz", "start": 28, "end": 31, "kind": "walk"},
+  {"id": "walk_normal_04", "source": "120/120_20_stageii.npz", "start": 42, "end": 45, "kind": "walk"},
+  {"id": "turn_slow_01", "source": "120/120_19_stageii.npz", "start": 58, "end": 62, "kind": "turn"},
+  {"id": "turn_slow_02", "source": "120/120_19_stageii.npz", "start": 74, "end": 78, "kind": "turn"},
+  {"id": "turn_normal_01", "source": "120/120_20_stageii.npz", "start": 9, "end": 13, "kind": "turn"},
+  {"id": "turn_normal_02", "source": "120/120_20_stageii.npz", "start": 59, "end": 63, "kind": "turn"},
+  {"id": "stand_01", "source": "82/82_08_stageii.npz", "start": 1, "end": 4, "kind": "stand"},
+  {"id": "stand_02", "source": "111/111_28_stageii.npz", "start": 0, "end": 3, "kind": "stand"},
+  {"id": "walk_slow_05", "source": "120/120_19_stageii.npz", "start": 24, "end": 27, "kind": "walk"},
+  {"id": "walk_slow_06", "source": "120/120_19_stageii.npz", "start": 41, "end": 44, "kind": "walk"},
+  {"id": "walk_slow_07", "source": "120/120_19_stageii.npz", "start": 66, "end": 69, "kind": "walk"},
+  {"id": "walk_slow_08", "source": "120/120_19_stageii.npz", "start": 83, "end": 86, "kind": "walk"}
+]

@@ -10,6 +10,8 @@ readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10,<3.14"
 dependencies = [
+  # TensorBoard 2.20 imports pkg_resources, removed in setuptools 82.
+  "setuptools>=69,<82",
   "tyro>=1.0.1",
   "prettytable>=3.0.0",
   "PyYAML>=6.0",

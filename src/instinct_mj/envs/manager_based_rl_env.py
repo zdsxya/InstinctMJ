@@ -124,8 +124,11 @@ class InstinctRlEnv(ManagerBasedRlEnv):
     def update_visualizers(self, visualizer: DebugVisualizer) -> None:
         super().update_visualizers(visualizer)
         terrain = self.scene.terrain
-        if terrain is not None:
-            terrain.debug_vis(visualizer)
+        # Custom terrain importers provide this hook; mjlab's plane
+        # TerrainEntity does not.
+        debug_vis = getattr(terrain, "debug_vis", None)
+        if callable(debug_vis):
+            debug_vis(visualizer)
 
     def _reset_idx(self, env_ids: Sequence[int] | torch.Tensor) -> None:
         if isinstance(env_ids, Sequence):

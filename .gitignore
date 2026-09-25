@@ -21,8 +21,11 @@ instinct_mj.egg-info/
 .venv/
 venv/
 .vscode/
+/docs/
 .pytest_cache/
-/tests/
+/tests/*
+!/tests/test_mild_contact.py
+!/tests/test_mild_integration.py
 # Python cache files
 __pycache__/
 *.pyc
