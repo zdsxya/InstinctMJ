@@ -1,233 +1,126 @@
-# InstinctMJ
+# InstinctMJ · SuperMimic
 
 [![mjlab](https://img.shields.io/badge/framework-mjlab-4C7AF2.svg)](https://github.com/mujocolab/mjlab)
 [![MuJoCo Warp](https://img.shields.io/badge/simulator-MuJoCo%20Warp-silver.svg)](https://github.com/google-deepmind/mujoco_warp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://docs.python.org/3/)
-[![Platform](https://img.shields.io/badge/platform-linux--x86__64-orange.svg)](https://releases.ubuntu.com/)
 [![instinct_rl](https://img.shields.io/badge/training-instinct__rl-brightgreen.svg)](https://github.com/project-instinct/instinct_rl)
 
-## Overview
+This branch trains the G1 perceptive shadowing parkour policy (`Instinct-Perceptive-Shadowing-G1-*`, depth camera) with
+**SuperMimic**: the simulator only collects data, a differentiable world model predicts the robot state, and the policy is trained
+by backpropagation through 32-step imagined rollouts. No PPO. The depth image is not imagined: at every imagined state it is
+rendered from the known scene by differentiable ray casting (MuJoCo Warp), so the policy's depth encoder is trained end to end.
+InstinctMJ is the `mjlab` port of [InstinctLab](https://github.com/project-instinct/InstinctLab)
+([Project-Instinct](https://project-instinct.github.io/)).
 
-This repository is the `mjlab-native port` of [InstinctLab](https://github.com/project-instinct/InstinctLab), serving as the environment side of [Project-Instinct](https://project-instinct.github.io/).
+![method](src/instinct_mj/rl/supermimic/assets/method.png)
 
-We aim to industrialize Reinforcement Learning for humanoid whole-body control, with task families implemented on top of `mjlab` and integrated into the Project-Instinct training workflow.
-
-**Key Features:**
-
-- `Standalone package` Work outside the core `mjlab` repository while keeping task development self-contained.
-- `Task suite` Provide locomotion, shadowing, perceptive, and parkour task families for humanoid control on `mjlab`.
-- `Unified ecosystem` Integrate directly with [instinct_rl](https://github.com/project-instinct/instinct_rl) for train / play / export workflows.
-- `Structured outputs` Keep experiment logs under `logs/instinct_rl/<experiment_name>/<timestamp_run>/` to match the Project-Instinct workflow.
-
-**Keywords:** mjlab, mujoco-warp, instinct_rl, humanoid
-
-## Warning
-
-This codebase is under [CC BY-NC 4.0 license](LICENSE). You may not use the material for commercial purposes, for example to advertise commercial products or redistribute the code as part of a commercial offering.
-
-## Attention
-
-Do not directly use checkpoints trained outside `InstinctMJ` with `InstinctMJ`.
-
-- `InstinctMJ` loads the robot from XML / MJCF, and the resulting joint order is not the same as the joint order used in IsaacLab.
-- Policy inputs / outputs tied to joint ordering are therefore not directly checkpoint-compatible across different simulator setups.
-- Please release and use weights trained in `InstinctMJ` for `InstinctMJ` tasks.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [CONTRIBUTOR_AGREEMENT.md](CONTRIBUTOR_AGREEMENT.md) for contribution requirements.
+One RTX 3090, 1024 environments: **95% success** on the 10 motions of the released dataset (diveroll, knee climb onto a 50 cm
+step, jump-sit, roll vault) after 8000 iterations (2.8 h). Method, results and configuration:
+[src/instinct_mj/rl/supermimic/README.md](src/instinct_mj/rl/supermimic/README.md).
 
 ## Installation
 
-From the `InstinctMJ` directory:
-
 ```bash
-# If uv is not installed:
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
+curl -LsSf https://astral.sh/uv/install.sh | sh   # if uv is not installed
 uv sync
-uv run instinct-list-envs
 ```
 
-That is the normal install path. `uv sync` installs `InstinctMJ`, resolves the locked MuJoCo / MuJoCo Warp stack, and pulls `instinct_rl` from the Git source recorded in `uv.lock`.
+- Python 3.10–3.13, Linux x86_64.
+- `mjlab 1.6.0` must be next to this directory as `../mjlab` (installed editable from that path).
+- `instinct_rl 1.0.2` is installed from the commit recorded in `uv.lock`.
 
-Prerequisites:
+## Data and weights
 
-- Python `3.10` to `3.13` (`requires-python = ">=3.10,<3.14"`).
-- Linux x86_64 or macOS arm64.
-- `mjlab 1.6.0` must be next to this directory as `../mjlab`, because `pyproject.toml` installs it editable from that path.
-- `instinct_rl 1.0.2` is installed from commit `3a2844890387eda6d93a4465cdef9e767aba8546`, as recorded in `uv.lock`.
+Download from the [SuperMimic release](https://github.com/project-instinct/InstinctMJ/releases/latest):
 
-After installation, run training and playback with the `instinct_rl`-style commands:
+- `20251116_50cm_kneeClimbStep1.zip`: the dataset. Unzip into `~/Datasets/` (the default `MOTION_FOLDER` in
+  `src/instinct_mj/tasks/shadowing/perceptive/config/g1/perceptive_shadowing_cfg.py`).
+- The trained policy checkpoint and its ONNX export. The world-model state in the release belongs to the earlier visual-latent
+  version and cannot be resumed with this code.
+
+## Usage
 
 ```bash
-uv run instinct-train Instinct-Locomotion-Flat-G1-v0
-uv run instinct-play Instinct-Locomotion-Flat-G1-Play-v0 --load-run <run_name>
+# train
+uv run instinct-train Instinct-Perceptive-Shadowing-G1-v0 --num-envs 1024
+# evaluate (success rate per motion)
+uv run python -m instinct_mj.scripts.supermimic.evaluate --checkpoint <run>/model_<it>.pt --motion-folder ~/Datasets/20251116_50cm_kneeClimbStep1 --num-envs 128
+# web viewer (viser)
+uv run python webplay_supermimic.py <run>/model_<it>.pt
+# play + ONNX export
+uv run instinct-play Instinct-Perceptive-Shadowing-G1-Play-v0 --checkpoint-file <run>/model_<it>.pt --viewer none --export-onnx True
 ```
 
-If the virtual environment is active, the console scripts also work without `uv run`.
+Runs are written to `logs/instinct_rl/g1_perceptive_shadowing/`.
 
-## Set up IDE (Optional)
+## Acknowledgements
 
-If VSCode / Pylance misses local imports in a multi-repository workspace, add these paths to `.vscode/settings.json`:
+This work builds on **SuperMimic** (Liao et al., CoRL 2026), whose method this branch follows, and on
+[**supermimic_vibed**](https://github.com/zita-ch/supermimic_vibed) by Chong Zhang (ETH Zurich, MIT License), the open
+reproduction from which the world model, replay buffer, rotation utilities and training loop were adapted. Many thanks to the
+authors of both. This branch is not affiliated with the SuperMimic authors.
 
-```json
-{
-  "python.analysis.extraPaths": [
-    "<workspace_dir>/InstinctMJ/src",
-    "<workspace_dir>/mjlab/src",
-    "<workspace_dir>/instinct_rl"
-  ]
+```bibtex
+@misc{liao2026supermimic,
+  title         = {SuperMimic: Scaling Humanoid Whole-Body Control with One Differentiable World Model},
+  author        = {Liao, Qiayuan and Shao, Yiyang and Long, Junfeng and Zakka, Kevin and Horowitz, Roberto and Abbeel, Pieter and Sreenath, Koushil},
+  year          = {2026},
+  eprint        = {2610.28480},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.RO},
+  note          = {CoRL 2026},
+  url           = {https://arxiv.org/abs/2610.28480}
+}
+
+@misc{zhang2026supermimicvibed,
+  title        = {supermimic\_vibed: an open reproduction of SuperMimic},
+  author       = {Zhang, Chong},
+  year         = {2026},
+  howpublished = {\url{https://github.com/zita-ch/supermimic_vibed}}
 }
 ```
 
-## Task Suite
+## License
 
-Registered task IDs:
+[CC BY-NC 4.0](LICENSE): no commercial use. Contributions: see [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CONTRIBUTOR_AGREEMENT.md](CONTRIBUTOR_AGREEMENT.md).
 
-- `Instinct-Locomotion-Flat-G1-v0`
-- `Instinct-Locomotion-Flat-G1-Play-v0`
-- `Instinct-Locomotion-Mild-Walk-G1-v0`
-- `Instinct-Locomotion-Mild-Walk-G1-Play-v0`
-- `Instinct-Locomotion-vae-G1-v0`
-- `Instinct-Locomotion-vae-G1-Play-v0`
-- `Instinct-BeyondMimic-Plane-G1-v0`
-- `Instinct-BeyondMimic-Plane-G1-Play-v0`
-- `Instinct-Shadowing-WholeBody-Plane-G1-v0`
-- `Instinct-Shadowing-WholeBody-Plane-G1-Play-v0`
-- `Instinct-Perceptive-Shadowing-G1-v0`
-- `Instinct-Perceptive-Shadowing-G1-Play-v0`
-- `Instinct-Perceptive-Shadowing-G1-OneMotion-v0`
-- `Instinct-Perceptive-Shadowing-G1-OneMotion-Play-v0`
-- `Instinct-Perceptive-HOI-Shadowing-G1-v0`
-- `Instinct-Perceptive-HOI-Shadowing-G1-Play-v0`
-- `Instinct-Perceptive-Vae-G1-v0`
-- `Instinct-Perceptive-Vae-G1-Play-v0`
-- `Instinct-Parkour-Target-Amp-G1-v0`
-- `Instinct-Parkour-Target-Amp-G1-Play-v0`
+Checkpoints trained outside InstinctMJ are not compatible: the joint order comes from the MJCF and differs from IsaacLab.
 
-Use the CLI to inspect the full list at any time:
+
+## Local MILD tasks
+
+This checkout merges upstream `supermimic` at `3f0952d36268c6aad299e256d27cc65d3bcc1434`
+with the local MILD implementation. The upstream SuperMimic implementations and
+registrations are retained; MILD continues to use its original PPO/AMP runners.
+
+| Training task | Method |
+| --- | --- |
+| `Instinct-Locomotion-Mild-Walk-G1-v0` | Deformable-ground walking with UMR AMP |
+| `Instinct-Locomotion-vae-G1-v0` | State estimation, terrain VAE, and foot-velocity modulation with PPO (AMP disabled) |
+
+Each has a Play task with `-Play-v0` replacing `-v0`. The former ordinary-PPO
+`Instinct-Locomotion-Mild-G1` tasks remain unregistered.
 
 ```bash
 uv run instinct-list-envs
-uv run instinct-list-envs shadowing
+uv run instinct-train Instinct-Locomotion-Mild-Walk-G1-v0
+uv run instinct-play Instinct-Locomotion-Mild-Walk-G1-Play-v0 --load-run <run_dir>
+uv run instinct-train Instinct-Locomotion-vae-G1-v0
 ```
 
-## Quick Start
+See [UMR setup](docs/UMR/UMR_init.md), [UMR viewer](docs/UMR/viewer.md),
+[the current VAE configuration](docs/change1.md), and
+[the historical baseline](docs/baseline/README.md).
 
-For MILD deformable-ground locomotion, the retained `Mild-Walk` task uses UMR
-AMP, and the `vae` task adds state estimation, a terrain VAE, and foot-velocity
-modulation with twelve leg actions and PPO (AMP disabled). See [baseline adjustment 1](docs/change1.md) for the current configuration and [the original baseline](docs/baseline/README.md) for historical details.
-The former ordinary-PPO `Instinct-Locomotion-Mild-G1` train/play tasks have been removed.
+The upstream branch also registers
+`Instinct-Parkour-Target-Amp-SuperMimic-G1-v0` and its `-Play-v0` counterpart.
+The existing `Instinct-Parkour-Target-Amp-G1-v0` PPO/AMP task is retained.
+Perceptive shadowing follows upstream's switch to SuperMimic.
 
-Train:
-
-```bash
-uv run instinct-train Instinct-Locomotion-Flat-G1-v0
-uv run instinct-train Instinct-Perceptive-Shadowing-G1-v0
-```
-
-Play (`--load-run` is required):
-
-```bash
-uv run instinct-play Instinct-Locomotion-Flat-G1-Play-v0 --load-run <run_name>
-uv run instinct-play Instinct-Perceptive-Shadowing-G1-Play-v0 --load-run <run_name>
-```
-
-Play perceptive shadowing with released weights:
-
-```bash
-uv run instinct-play Instinct-Perceptive-Shadowing-G1-Play-v0 \
-  --load-run <downloaded_run_dir> \
-  --checkpoint-file <checkpoint_file>
-```
-
-Pretrained weights:
-
-- Google Drive: [Pretrained weights](https://drive.google.com/drive/folders/1RPjbZjurknhlvlj9dxAUkARkcEyexQvF?usp=sharing)
-
-Export ONNX for parkour:
-
-```bash
-uv run instinct-play Instinct-Parkour-Target-Amp-G1-Play-v0 --load-run <run_name> --export-onnx
-```
-
-Play parkour with released weights:
-
-```bash
-uv run instinct-play Instinct-Parkour-Target-Amp-G1-Play-v0 \
-  --load-run <downloaded_run_dir> \
-  --checkpoint-file <checkpoint_file>
-```
-
-Parkour pretrained weights:
-
-- Google Drive: [Parkour pretrained weights](https://drive.google.com/drive/folders/1B2AP5MEC5hDF7w5ws9oIiRKStL_gRxhE?usp=drive_link)
-
-Before training or playing parkour tasks, update the local dataset root in
-`src/instinct_mj/tasks/parkour/config/g1/g1_parkour_target_amp_cfg.py`:
-
-```python
-_PARKOUR_DATASET_DIR = os.path.expanduser("~/your/path/to/parkour_motion_reference")
-```
-
-If your filtered motion list is stored elsewhere, also update
-`filtered_motion_selection_filepath` in the same file. See
-`src/instinct_mj/tasks/parkour/README.md` for the task-specific notes.
-
-Module form is also available when console scripts are not on `PATH`:
-
-```bash
-uv run python -m instinct_mj.scripts.instinct_rl.train Instinct-Locomotion-Flat-G1-v0
-uv run python -m instinct_mj.scripts.instinct_rl.play Instinct-Locomotion-Flat-G1-Play-v0 --load-run <run_name>
-uv run python -m instinct_mj.scripts.list_envs
-```
-
-## Code Formatting
-
-We use `pre-commit` for formatting and hygiene checks.
-
-Install `pre-commit`:
-
-```bash
-pip install pre-commit
-```
-
-Run all checks:
-
-```bash
-pre-commit run --all-files
-```
-
-To enable hooks on every commit:
-
-```bash
-pre-commit install
-```
-
-## Train Your Own Projects
-
-To preserve your own experiments and logs, it is usually better to create your own task package or repository and reuse the task patterns from `InstinctMJ`.
-
-If you want to add a new task directly in this repository:
-
-- Create a new folder under `src/instinct_mj/tasks/<your_project>/`.
-- Add `__init__.py` at each package level.
-- Register tasks with `register_instinct_task()`.
-- Keep the environment config and `instinct_rl` config colocated in the task package.
-
-Example registration pattern:
-
-```python
-from instinct_mj.tasks.registry import register_instinct_task
-
-from .my_env_cfg import MyEnvCfg, MyEnvCfg_PLAY
-from .rl_cfg import my_instinct_rl_cfg
-
-register_instinct_task(
-    task_id="Instinct-My-Task-v0",
-    env_cfg_factory=MyEnvCfg,
-    play_env_cfg_factory=MyEnvCfg_PLAY,
-    instinct_rl_cfg_factory=my_instinct_rl_cfg,
-)
-```
+Local compatibility changes are retained for selected-joint standing rewards,
+flat-terrain visualization, native viewer shutdown, CLI type annotations and
+multi-radius flat-patch sampling, and the TensorBoard-compatible setuptools pin.
+The existing local Parkour dataset path and terrain resolution are preserved.
+Training logs, checkpoints, motion data, and the current Python dependencies are
+not replaced by the source merge.
