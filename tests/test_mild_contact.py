@@ -9,7 +9,7 @@ import torch
 
 from instinct_mj.tasks.locomotion.mild.config import MildContactCfg
 from instinct_mj.tasks.locomotion.mild.geometry import FOOT_NAMES, mild_g1_spec, sole_quadrature
-from instinct_mj.tasks.locomotion.mild.solver import granular_law, solve_contact
+from instinct_mj.tasks.locomotion.mild.solver import granular_law, resultant_zmp, solve_contact
 
 
 class MildMechanicsTests(unittest.TestCase):
@@ -74,6 +74,15 @@ class MildMechanicsTests(unittest.TestCase):
         self.assertEqual(force.abs().sum().item(), 0)
         self.assertEqual(impulse.abs().sum().item(), 0)
 
+    def test_zmp_wrench_intersection_and_no_support(self):
+        force = torch.tensor([[[20., -10., 300.], [0., 0., 0.]]])
+        origin = torch.tensor([[[1., 2., .1], [4., 5., .1]]])
+        expected = torch.tensor([[[1.05, 1.98, 0.], [4., 5., 0.]]])
+        torque = torch.cross(expected - origin, force, dim=-1)
+        zmp, valid = resultant_zmp(force, torque, origin, torch.zeros(1, 1))
+        torch.testing.assert_close(zmp, expected)
+        self.assertEqual(valid.tolist(), [[True, False]])
+
     def test_geometry_area_convergence_and_collision_masks(self):
         model = mild_g1_spec().compile()
         body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, FOOT_NAMES[0])
@@ -91,16 +100,18 @@ class MildMechanicsTests(unittest.TestCase):
 
     def test_flat_and_mild_agent_schema_match(self):
         from instinct_mj.tasks.registry import load_env_cfg, load_instinct_rl_cfg
+        from instinct_mj.tasks.locomotion.config.g1.mild_env_cfg import G1MildEnvCfg
+        from instinct_mj.tasks.locomotion.config.g1.mild_rl_cfg import G1MildPPORunnerCfg
 
         flat = load_env_cfg("Instinct-Locomotion-Flat-G1-v0")
-        mild = load_env_cfg("Instinct-Locomotion-Mild-G1-v0")
+        mild = G1MildEnvCfg()
         for group in ("policy", "critic"):
             self.assertEqual(list(flat.observations[group].terms), list(mild.observations[group].terms))
         self.assertEqual(flat.decimation * flat.sim.mujoco.timestep, mild.decimation * mild.sim.mujoco.timestep)
         for name, term in flat.rewards.items():
             self.assertEqual(term.weight, mild.rewards[name].weight)
         a = load_instinct_rl_cfg("Instinct-Locomotion-Flat-G1-v0").to_dict()
-        b = load_instinct_rl_cfg("Instinct-Locomotion-Mild-G1-v0").to_dict()
+        b = G1MildPPORunnerCfg().to_dict()
         a.pop("experiment_name")
         b.pop("experiment_name")
         self.assertEqual(a, b)
@@ -194,8 +205,9 @@ class MildWalkingTests(unittest.TestCase):
     def test_walk_keeps_contact_physics_and_separates_checkpoints(self):
         from dataclasses import asdict
         from instinct_mj.tasks.registry import load_env_cfg, load_instinct_rl_cfg
+        from instinct_mj.tasks.locomotion.config.g1.mild_env_cfg import G1MildEnvCfg
 
-        mild = load_env_cfg("Instinct-Locomotion-Mild-G1-v0")
+        mild = G1MildEnvCfg()
         walk = load_env_cfg("Instinct-Locomotion-Mild-Walk-G1-v0")
         self.assertEqual(asdict(mild.deformable_contact), asdict(walk.deformable_contact))
         self.assertEqual(mild.sim.mujoco.timestep, walk.sim.mujoco.timestep)
@@ -205,7 +217,7 @@ class MildWalkingTests(unittest.TestCase):
         for group in ("policy", "critic"):
             self.assertNotIn("gait_clock", mild.observations[group].terms)
             self.assertIn("gait_clock", walk.observations[group].terms)
-        self.assertNotEqual(load_instinct_rl_cfg("Instinct-Locomotion-Mild-G1-v0").experiment_name,
+        self.assertNotEqual(load_instinct_rl_cfg("Instinct-Locomotion-vae-G1-v0").experiment_name,
                             load_instinct_rl_cfg("Instinct-Locomotion-Mild-Walk-G1-v0").experiment_name)
 
 

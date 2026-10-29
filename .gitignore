@@ -21,11 +21,18 @@ instinct_mj.egg-info/
 .venv/
 venv/
 .vscode/
-/docs/
+/docs/*
+!/docs/baseline/
+!/docs/change1.md
+!/docs/UMR/
+/docs/UMR/*
+!/docs/UMR/viewer.md
 .pytest_cache/
 /tests/*
 !/tests/test_mild_contact.py
 !/tests/test_mild_integration.py
+!/tests/test_mild_walk_arm_rewards.py
+!/tests/test_mild_vae.py
 # Python cache files
 __pycache__/
 *.pyc

@@ -87,8 +87,10 @@ def stand_still(
     command_name: str,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
+    """Penalize selected joints' default-pose error under a standing command."""
     asset: Entity = env.scene[asset_cfg.name]
-    dof_error = torch.sum(torch.abs(asset.data.joint_pos - asset.data.default_joint_pos), dim=1)
+    joint_error = asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids]
+    dof_error = torch.sum(torch.abs(joint_error), dim=1)
 
     return (
         dof_error

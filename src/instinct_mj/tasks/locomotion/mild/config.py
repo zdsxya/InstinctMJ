@@ -1,7 +1,7 @@
 """Explicit, positive-parameter engineering profile for MILD contact.
 
 The paper's ambiguous signed coefficients are not silently reproduced. See
-docs/mild-contact.md for the positive-depth convention and discretization.
+docs/baseline/README.md for the positive-depth convention and discretization.
 """
 
 from dataclasses import dataclass, field

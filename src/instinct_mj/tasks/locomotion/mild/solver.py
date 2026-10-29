@@ -38,6 +38,23 @@ def project_friction(impulse, normal_impulse, friction):
     return impulse * (radius / impulse.norm(dim=-1).clamp(min=1.0e-12)).clamp(max=1).unsqueeze(-1)
 
 
+def resultant_zmp(force, torque, origin, surface_height, threshold=0.1):
+    """Intersect the resultant wrench with a horizontal surface (Eq. 15).
+
+    MuJoCo uses torque = r cross F, opposite to the printed paper's F cross r.
+    Return a world-space point and a support mask; unsupported points use the
+    origin's xy coordinates and must be ignored by consumers.
+    """
+    valid = force[..., 2] > threshold
+    z = torch.broadcast_to(surface_height, force[..., 2].shape)
+    dz = z - origin[..., 2]
+    denominator = force[..., 2].clamp(min=threshold)
+    x = origin[..., 0] + (dz * force[..., 0] - torque[..., 1]) / denominator
+    y = origin[..., 1] + (torque[..., 0] + dz * force[..., 1]) / denominator
+    xy = torch.where(valid[..., None], torch.stack((x, y), dim=-1), origin[..., :2])
+    return torch.cat((xy, z[..., None]), dim=-1), valid
+
+
 def solve_contact(mass_matrix, jacobian, qvel, free_force, bias_acceleration,
                   force_base, effective_mass, drift_force, friction, active,
                   previous_impulse, dt, friction_iterations, coupling_iterations):

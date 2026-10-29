@@ -31,17 +31,20 @@ class UmrPipelineTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertFalse(result["checks"]["ground_penetration_m"])
 
-    def test_only_walk_task_gets_amp_and_no_encoder(self):
+    def test_walk_task_keeps_amp_and_no_encoder(self):
         from instinct_mj.tasks.registry import load_env_cfg, load_instinct_rl_cfg
         from instinct_mj.tasks.parkour.config.g1.rl_cfg import AmpAlgoCfg
+        from instinct_mj.tasks.locomotion.config.g1.mild_rl_cfg import G1MildPPORunnerCfg
         walk = load_instinct_rl_cfg("Instinct-Locomotion-Mild-Walk-G1-v0")
-        mild = load_instinct_rl_cfg("Instinct-Locomotion-Mild-G1-v0")
+        mild = G1MildPPORunnerCfg()
         self.assertEqual(asdict(walk.policy), asdict(mild.policy))
         self.assertEqual(walk.algorithm.class_name, "WasabiPPO")
         self.assertEqual(mild.algorithm.class_name, "PPO")
         for key, value in vars(AmpAlgoCfg()).items():
-            if key.startswith("discriminator_"):
+            if key.startswith("discriminator_") and key != "discriminator_reward_coef":
                 self.assertEqual(getattr(walk.algorithm, key), value)
+        self.assertGreater(walk.algorithm.discriminator_reward_coef, 0)
+        self.assertLess(walk.algorithm.discriminator_reward_coef, AmpAlgoCfg().discriminator_reward_coef)
         for key, value in vars(mild.algorithm).items():
             if key != "class_name" and not key.startswith("discriminator_"):
                 self.assertEqual(getattr(walk.algorithm, key), value)

@@ -13,19 +13,17 @@ class G1MildPPORunnerCfg(G1FlatPPORunnerCfg):
     experiment_name: str = "g1_locomotion_mild_contact"
 
 
-def g1_mild_instinct_rl_cfg() -> G1MildPPORunnerCfg:
-    return G1MildPPORunnerCfg()
-
-
 @dataclass(kw_only=True)
 class MildWalkAmpAlgorithmCfg(AlgorithmCfg):
-    """Parkour AMP settings with the walking task's existing PPO parameters."""
+    """Parkour discriminator with a lower style weight for upright walking."""
 
     class_name: str = "WasabiPPO"
     discriminator_kwargs: dict = field(default_factory=lambda: {
         "hidden_sizes": [1024, 512], "nonlinearity": "ReLU",
     })
-    discriminator_reward_coef: float = 0.25
+    # AMP is added per step, while environment rewards are scaled by dt=0.02.
+    # Reduce style pressure so the explicit posture penalties have more influence.
+    discriminator_reward_coef: float = 0.025
     discriminator_reward_type: str = "quad"
     discriminator_loss_func: str = "MSELoss"
     discriminator_gradient_penalty_coef: float = 5.0

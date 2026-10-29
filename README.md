@@ -87,10 +87,10 @@ Registered task IDs:
 
 - `Instinct-Locomotion-Flat-G1-v0`
 - `Instinct-Locomotion-Flat-G1-Play-v0`
-- `Instinct-Locomotion-Mild-G1-v0`
-- `Instinct-Locomotion-Mild-G1-Play-v0`
 - `Instinct-Locomotion-Mild-Walk-G1-v0`
 - `Instinct-Locomotion-Mild-Walk-G1-Play-v0`
+- `Instinct-Locomotion-vae-G1-v0`
+- `Instinct-Locomotion-vae-G1-Play-v0`
 - `Instinct-BeyondMimic-Plane-G1-v0`
 - `Instinct-BeyondMimic-Plane-G1-Play-v0`
 - `Instinct-Shadowing-WholeBody-Plane-G1-v0`
@@ -115,11 +115,10 @@ uv run instinct-list-envs shadowing
 
 ## Quick Start
 
-For discrete deformable-ground contact with the flat G1 policy and ordinary PPO
-(no VAE), see [MILD contact setup and commands](docs/mild-contact.md).
-
-For alternating forward walking with the same MILD contact solver and additional
-gait rewards, see [MILD walking setup and evaluation](docs/mild-walk.md).
+For MILD deformable-ground locomotion, the retained `Mild-Walk` task uses UMR
+AMP, and the `vae` task adds state estimation, a terrain VAE, and foot-velocity
+modulation with twelve leg actions and PPO (AMP disabled). See [baseline adjustment 1](docs/change1.md) for the current configuration and [the original baseline](docs/baseline/README.md) for historical details.
+The former ordinary-PPO `Instinct-Locomotion-Mild-G1` train/play tasks have been removed.
 
 Train:
 

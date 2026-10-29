@@ -7,13 +7,16 @@ import torch
 
 def moving(env):
     command = env.command_manager.get_command("base_velocity")
-    return command[:, :2].norm(dim=-1) > 0.1
+    return (command[:, :2].norm(dim=-1) > 0.1) | (command[:, 2].abs() > 0.1)
 
 
 def foot_phase(env):
     # Spread training environments across the cycle without mutable clock state.
     # Episode resets also reset the clock; environment zero starts in double support.
-    offset = torch.arange(env.num_envs, device=env.device) * 0.61803398875
+    offset = (
+        torch.arange(env.num_envs, device=env.device) * 0.61803398875
+        if getattr(env.cfg, "randomize_gait_phase_by_env", True) else 0.0
+    )
     phase = env.episode_length_buf * env.step_dt / env.cfg.gait_period + offset
     return torch.stack((phase, phase + 0.5), dim=-1).remainder(1.0)
 
@@ -52,6 +55,13 @@ def swing_clearance(env):
 def flight(env):
     support = env.mild_contact.foot_force[:, :, 2] > env.cfg.gait_contact_threshold
     return (~support.any(dim=-1)).float()
+
+
+def yaw_rate_error_l1(env):
+    """Keep a non-vanishing cost for small persistent yaw-rate tracking errors."""
+    desired = env.command_manager.get_command("base_velocity")[:, 2]
+    actual = env.scene["robot"].data.root_link_ang_vel_w[:, 2]
+    return (actual - desired).abs()
 
 
 def walking_metrics(env):

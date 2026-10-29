@@ -12,7 +12,7 @@ import warp as wp
 
 from .config import MildContactCfg
 from .geometry import FOOT_NAMES, sole_quadrature
-from .solver import granular_law, solve_contact
+from .solver import granular_law, resultant_zmp, solve_contact
 
 
 class MildContact:
@@ -55,6 +55,7 @@ class MildContact:
         self.force_history = torch.zeros((batch, 2, 3, 3), **kwargs)
         self.foot_force = torch.zeros((batch, 2, 3), **kwargs)
         self.foot_torque = torch.zeros_like(self.foot_force)
+        self.wrench_origin = torch.zeros_like(self.foot_force)
         self.impulse_residual = torch.zeros(batch, **kwargs)
         self.normal_residual = torch.zeros(batch, **kwargs)
         self.material = {item.name: torch.zeros((batch, 1), **kwargs) for item in fields(cfg.material)}
@@ -101,7 +102,7 @@ class MildContact:
         for tensor in (self.positions, self.forces, self.depth, self.path_length, self.previous_xy,
                        self.was_active, self.tangent_impulse, self.previous_jacobian, self.has_previous,
                        self.current_air_time, self.current_contact_time, self.force_history,
-                       self.foot_force, self.foot_torque, self.impulse_residual, self.normal_residual):
+                       self.foot_force, self.foot_torque, self.wrench_origin, self.impulse_residual, self.normal_residual):
             tensor[env_ids] = 0
         for name, target in self.material.items():
             lo, hi = getattr(self.cfg.material, name)
@@ -177,7 +178,8 @@ class MildContact:
         self.was_active.copy_(active)
         self.has_previous.fill_(True)
         per_foot = forces.reshape(self.env.num_envs, 2, self.points_per_foot, 3)
-        lever = positions.reshape_as(per_foot) - data.xipos[:, self.body_indices, None, :]
+        self.wrench_origin.copy_(data.xipos[:, self.body_indices])
+        lever = positions.reshape_as(per_foot) - self.wrench_origin[:, :, None, :]
         self.foot_force.copy_(per_foot.sum(dim=2))
         self.foot_torque.copy_(torch.cross(lever, per_foot, dim=-1).sum(dim=2))
         data.xfrc_applied[:, self.body_indices, :3] = self.foot_force
@@ -189,6 +191,12 @@ class MildContact:
         self.force_history[:, :, 0] = self.foot_force
 
     def metrics(self):
+        com = self.wrench_origin
+        zmp, support = resultant_zmp(
+            self.foot_force, self.foot_torque, com,
+            self.env.scene.env_origins[:, 2:3] + self.cfg.surface_height,
+            max(self.cfg.contact_threshold, 1e-6),
+        )
         return {
             "Mild/max_depth": self.depth.amax().detach(),
             "Mild/mean_depth": self.depth.mean().detach(),
@@ -197,6 +205,7 @@ class MildContact:
             "Mild/impulse_residual": self.impulse_residual.mean().detach(),
             "Mild/normal_residual_N": self.normal_residual.mean().detach(),
             "Mild/not_converged": (self.impulse_residual > self.cfg.impulse_tolerance).float().mean().detach(),
+            "Mild/max_zmp_offset": ((zmp[..., :2] - com[..., :2]).norm(dim=-1) * support).amax().detach(),
         }
 
     def debug_vis(self, visualizer):

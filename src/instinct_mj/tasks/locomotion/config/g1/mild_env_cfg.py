@@ -1,4 +1,4 @@
-"""MILD contact ablation: flat observations, actions, rewards and ordinary PPO."""
+"""Shared MILD contact configuration; public tasks add AMP walking or VAE."""
 
 from dataclasses import dataclass, field
 
@@ -22,21 +22,16 @@ class G1MildEnvCfg(G1LocomotionFlatEnvCfg):
         self.sim.mujoco.timestep = 0.001
         self.decimation = 20  # Preserve flat's 50 Hz policy.
         self.run_name = "G1MildContactPPO"
-        air = self.rewards["feet_air_time"]
-        air.func = mdp.feet_air_time_positive_biped
-        air.params.pop("sensor_name", None)
-        slide = self.rewards["feet_slide"]
-        slide.func = mdp.feet_slide
-        slide.params.pop("sensor_cfg", None)
+        air = self.rewards.get("feet_air_time")
+        if air is not None:
+            air.func = mdp.feet_air_time_positive_biped
+            air.params.pop("sensor_name", None)
+        slide = self.rewards.get("feet_slide")
+        if slide is not None:
+            slide.func = mdp.feet_slide
+            slide.params.pop("sensor_cfg", None)
         self.terminations["excessive_penetration"] = TerminationTermCfg(func=mdp.excessive_penetration)
         self.terminations["fallen"] = TerminationTermCfg(func=mdp.fallen)
-
-
-def instinct_g1_mild_env_cfg(*, play: bool = False) -> G1MildEnvCfg:
-    cfg = G1MildEnvCfg()
-    if play:
-        configure_mild_play(cfg)
-    return cfg
 
 
 def configure_mild_play(cfg: G1MildEnvCfg) -> None:

@@ -33,11 +33,13 @@ class MildRlEnv(InstinctRlEnv):
         for _ in range(self.cfg.decimation):
             self._sim_step_counter += 1
             self.action_manager.apply_action()
+            self._before_physics_step()
             self.scene.write_data_to_sim()
             self.mild_contact.clear_applied_forces()
             # Refresh cdof, M, actuation, and bias with CURRENT qpos/qvel and
             # without the previous contact force. Native body contacts remain.
             self.sim.forward()
+            self._after_physics_forward()
             self.mild_contact.step()
             self.sim.step()
             self.scene.update(dt=self.physics_dt)
@@ -45,6 +47,9 @@ class MildRlEnv(InstinctRlEnv):
 
         self.episode_length_buf += 1
         self.common_step_counter += 1
+        # Derived body poses/velocities must match the final integrated state
+        # for rewards and supervised state targets, not lag by one substep.
+        self.sim.forward()
         if not torch.isfinite(self.sim.data.qpos).all() or not torch.isfinite(self.mild_contact.forces).all():
             raise FloatingPointError("Nonfinite MILD dynamics; inspect material ranges and solver diagnostics")
         self.reset_buf = self.termination_manager.compute()
@@ -84,3 +89,9 @@ class MildRlEnv(InstinctRlEnv):
         super().update_visualizers(visualizer)
         if hasattr(self, "mild_contact"):
             self.mild_contact.debug_vis(visualizer)
+
+    def _before_physics_step(self):
+        """Task-local actuator processing at the physics rate."""
+
+    def _after_physics_forward(self):
+        """Task-local sensor sampling at the physics rate."""
