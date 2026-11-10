@@ -23,6 +23,7 @@ venv/
 .vscode/
 /docs/*
 !/docs/baseline/
+!/docs/vae/
 !/docs/change1.md
 !/docs/UMR/
 /docs/UMR/*
@@ -33,6 +34,9 @@ venv/
 !/tests/test_mild_integration.py
 !/tests/test_mild_walk_arm_rewards.py
 !/tests/test_mild_vae.py
+!/tests/test_mild_vae_deployment.py
+!/tests/test_mild_gait.py
+!/tests/test_teleop*.py
 # Python cache files
 __pycache__/
 *.pyc

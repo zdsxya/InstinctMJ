@@ -55,28 +55,36 @@ for _task_id, _play in (
     )
 
 
-def _mild_vae_env_cfg(play: bool):
+def _mild_vae_env_cfg(play: bool, variant: str):
     from .mild_vae_env_cfg import instinct_g1_mild_vae_env_cfg
 
-    return instinct_g1_mild_vae_env_cfg(play=play)
+    return instinct_g1_mild_vae_env_cfg(play=play, variant=variant)
 
 
-def _mild_vae_rl_cfg():
-    from .mild_vae_rl_cfg import G1MildVaeRunnerCfg
+def _mild_vae_rl_cfg(variant: str):
+    from .mild_vae_rl_cfg import g1_mild_vae_instinct_rl_cfg
 
-    return G1MildVaeRunnerCfg()
+    return g1_mild_vae_instinct_rl_cfg(variant)
 
 
-for _task_id, _play in (
-    ("Instinct-Locomotion-vae-G1-v0", False),
-    ("Instinct-Locomotion-vae-G1-Play-v0", True),
-):
-    register_instinct_task(
-        task_id=_task_id,
-        env_cfg_factory=lambda play=_play: _mild_vae_env_cfg(play=play),
-        play_env_cfg_factory=lambda: _mild_vae_env_cfg(play=True),
-        instinct_rl_cfg_factory=_mild_vae_rl_cfg,
-        env_entry_point="instinct_mj.tasks.locomotion.mild.vae_env:MildVaeEnv",
-        vecenv_entry_point="instinct_mj.tasks.locomotion.mild.vae_wrapper:MildVaeVecEnvWrapper",
-        runner_entry_point="instinct_mj.tasks.locomotion.mild.runner:MildVaeRunner",
-    )
+# The same 29-DoF locomotion task and budget across the estimator ablations.
+# Existing Mild-Walk keeps its separate AMP policy and registration above.
+for _variant, _suffix in (("baseline", "-Baseline"), ("vae", ""), ("full", "-Full")):
+    for _play in (False, True):
+        register_instinct_task(
+            task_id=f"Instinct-Locomotion-Mild-VAE{_suffix}-G1{'-Play' if _play else ''}-v0",
+            env_cfg_factory=lambda play=_play, variant=_variant: _mild_vae_env_cfg(play, variant),
+            play_env_cfg_factory=lambda variant=_variant: _mild_vae_env_cfg(True, variant),
+            instinct_rl_cfg_factory=lambda variant=_variant: _mild_vae_rl_cfg(variant),
+            env_entry_point="instinct_mj.tasks.locomotion.mild.vae_env:MildVaeEnv",
+            vecenv_entry_point=(
+                "instinct_mj.rl:InstinctRlVecEnvWrapper"
+                if _variant == "baseline"
+                else "instinct_mj.tasks.locomotion.mild.vae_wrapper:MildVaeVecEnvWrapper"
+            ),
+            runner_entry_point=(
+                "instinct_mj.tasks.locomotion.mild.runner:MildBaselineRunner"
+                if _variant == "baseline"
+                else "instinct_mj.tasks.locomotion.mild.runner:MildVaeRunner"
+            ),
+        )

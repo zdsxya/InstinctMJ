@@ -1,5 +1,8 @@
 # MILD baseline 复现
 
+> 历史记录：VAE 训练及 Play task 已于 2026-10-31 移除注册。
+> 下文及 `scripts/baseline/` 中的任务命令仅记录旧实验，不能直接用于当前任务列表。
+
 > 此页记录首次 VAE+AMP baseline。当前调整后的 12 维 PPO+VAE 配置、UMR 核查和训练状态见 [baseline 调整 1](../change1.md)。首次训练旧日志按新 guide 的清理要求处理。
 
 本目录对应 `docs/mytask.,md` 的「复现 baseline」。依据为仓库中的

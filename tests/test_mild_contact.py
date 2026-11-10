@@ -206,6 +206,7 @@ class MildWalkingTests(unittest.TestCase):
         from dataclasses import asdict
         from instinct_mj.tasks.registry import load_env_cfg, load_instinct_rl_cfg
         from instinct_mj.tasks.locomotion.config.g1.mild_env_cfg import G1MildEnvCfg
+        from instinct_mj.tasks.locomotion.config.g1.mild_vae_rl_cfg import G1MildVaeRunnerCfg
 
         mild = G1MildEnvCfg()
         walk = load_env_cfg("Instinct-Locomotion-Mild-Walk-G1-v0")
@@ -217,7 +218,7 @@ class MildWalkingTests(unittest.TestCase):
         for group in ("policy", "critic"):
             self.assertNotIn("gait_clock", mild.observations[group].terms)
             self.assertIn("gait_clock", walk.observations[group].terms)
-        self.assertNotEqual(load_instinct_rl_cfg("Instinct-Locomotion-vae-G1-v0").experiment_name,
+        self.assertNotEqual(G1MildVaeRunnerCfg().experiment_name,
                             load_instinct_rl_cfg("Instinct-Locomotion-Mild-Walk-G1-v0").experiment_name)
 
 

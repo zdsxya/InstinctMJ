@@ -97,20 +97,21 @@ registrations are retained; MILD continues to use its original PPO/AMP runners.
 | Training task | Method |
 | --- | --- |
 | `Instinct-Locomotion-Mild-Walk-G1-v0` | Deformable-ground walking with UMR AMP |
-| `Instinct-Locomotion-vae-G1-v0` | State estimation, terrain VAE, and foot-velocity modulation with PPO (AMP disabled) |
 
-Each has a Play task with `-Play-v0` replacing `-v0`. The former ordinary-PPO
-`Instinct-Locomotion-Mild-G1` tasks remain unregistered.
+MILD-Walk has a Play task with `-Play-v0` replacing `-v0`. The former ordinary-PPO
+`Instinct-Locomotion-Mild-G1` tasks remain unregistered. The local
+`Instinct-Locomotion-vae-G1-v0` and `Instinct-Locomotion-vae-G1-Play-v0` tasks
+were unregistered on 2026-10-31; their implementation and historical records
+are retained for reference.
 
 ```bash
 uv run instinct-list-envs
 uv run instinct-train Instinct-Locomotion-Mild-Walk-G1-v0
 uv run instinct-play Instinct-Locomotion-Mild-Walk-G1-Play-v0 --load-run <run_dir>
-uv run instinct-train Instinct-Locomotion-vae-G1-v0
 ```
 
 See [UMR setup](docs/UMR/UMR_init.md), [UMR viewer](docs/UMR/viewer.md),
-[the current VAE configuration](docs/change1.md), and
+[the archived VAE configuration](docs/change1.md), and
 [the historical baseline](docs/baseline/README.md).
 
 The upstream branch also registers
@@ -124,3 +125,18 @@ multi-radius flat-patch sampling, and the TensorBoard-compatible setuptools pin.
 The existing local Parkour dataset path and terrain resolution are preserved.
 Training logs, checkpoints, motion data, and the current Python dependencies are
 not replaced by the source merge.
+
+## Interactive teleoperation
+
+`instinct-teleop` runs a single robot with a Linux gamepad, separately from Play.
+Profiles: `mild_walk`, `parkour_amp`, and `parkour_supermimic`.
+
+```bash
+uv run instinct-teleop mild_walk --checkpoint-file <run>/model_<it>.pt
+uv run instinct-teleop parkour_amp --checkpoint-file <run>/model_<it>.pt --viewer viser
+uv run instinct-teleop mild_walk --print-config True
+```
+
+Each task has its own defaults under `src/instinct_mj/teleop/tasks/`; common input,
+policy loading and runtime logic are shared. See the [teleoperation guide](src/instinct_mj/teleop/README.md)
+for configuration locations, controller mappings, supported motion directions and verification commands.

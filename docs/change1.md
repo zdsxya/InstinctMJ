@@ -1,5 +1,8 @@
 # baseline 调整 1
 
+> 历史记录：`Instinct-Locomotion-vae-G1-v0` 及其 Play task 已于 2026-10-31 移除注册。
+> 本文配置和命令记录当时的实验，当前 CLI 不再支持这两个任务。
+
 修改对象由用户确认：`Instinct-Locomotion-vae-G1-v0` 及其 Play task。
 依据为本地 `docs/MILD.pdf` 的 Fig. 4、Table I/II、式 (16)–(17)。
 `Instinct-Locomotion-Mild-Walk-G1-v0` 保留原 AMP 实验。

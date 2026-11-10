@@ -39,6 +39,7 @@ class MildWalkAmpAlgorithmCfg(AlgorithmCfg):
 class G1MildWalkPPORunnerCfg(G1MildPPORunnerCfg):
     algorithm: MildWalkAmpAlgorithmCfg = field(default_factory=MildWalkAmpAlgorithmCfg)
     experiment_name: str = "g1_locomotion_mild_walk_amp"
+    save_interval: int = 200
 
 
 def g1_mild_walk_instinct_rl_cfg() -> G1MildWalkPPORunnerCfg:

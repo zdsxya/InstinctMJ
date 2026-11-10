@@ -455,6 +455,12 @@ def run_play(task_id: str, cfg: PlayConfig) -> None:
     elif cfg.export_onnx:
         raise ValueError("`--export-onnx` only supports `--agent trained`.")
 
+    if checkpoint is not None:
+        runner_cls = load_runner_cls(task_id) or OnPolicyRunner
+        configure_inference = getattr(runner_cls, "configure_inference", None)
+        if configure_inference is not None:
+            env_cfg, agent_cfg = configure_inference(env_cfg, agent_cfg, checkpoint)
+
     env_cls = load_env_cls(task_id)
     env = env_cls(
         cfg=env_cfg,

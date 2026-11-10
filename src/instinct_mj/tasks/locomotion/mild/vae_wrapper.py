@@ -1,24 +1,12 @@
-"""Store the identical causal actor history alongside privileged critic data."""
-
-import torch
+"""VAE observation adapter using the standard MJLab history/reset lifecycle."""
 
 from instinct_mj.rl.vecenv_wrapper import InstinctRlVecEnvWrapper
 
 
 class MildVaeVecEnvWrapper(InstinctRlVecEnvWrapper):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.num_critic_obs += self.num_obs
+    """Store actor history and same-time critic labels via regular PPO storage.
 
-    def get_obs_format(self):
-        result = super().get_obs_format()
-        result["critic"]["policy_history"] = (self.num_obs,)
-        return result
-
-    def get_obs_segments(self, group_name="policy"):
-        return self.get_obs_format()[group_name]
-
-    def _pack_observations(self, obs_dict):
-        packed = super()._pack_observations(obs_dict)
-        packed["critic"] = torch.cat((packed["critic"], packed["policy"]), dim=-1)
-        return packed
+    History is already provided by ObservationManager. The critic contains its
+    original observations plus state_targets for supervised losses; there is
+    no need to duplicate actor history in the critic stream.
+    """

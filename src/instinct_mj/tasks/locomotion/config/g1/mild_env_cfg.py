@@ -52,6 +52,6 @@ def configure_mild_play(cfg: G1MildEnvCfg) -> None:
     command.heading_command = False
     command.ranges.heading = None
     command.rel_standing_envs = 0.0
-    command.ranges.lin_vel_x = (0.6, 0.6)
+    command.ranges.lin_vel_x = (1.6, 1.6)
     command.ranges.lin_vel_y = (0.0, 0.0)
     command.ranges.ang_vel_z = (0.0, 0.0)

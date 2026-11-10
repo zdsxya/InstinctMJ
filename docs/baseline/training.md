@@ -1,5 +1,7 @@
 # 本次 baseline 训练记录
 
+> 历史记录：VAE 训练及 Play task 已于 2026-10-31 移除注册，以下命令不再适用于当前任务列表。
+
 > 此页记录首次 VAE+AMP baseline。当前调整后的 12 维 PPO+VAE 配置、UMR 核查和训练状态见 [baseline 调整 1](../change1.md)。首次训练旧日志按新 guide 的清理要求处理。
 
 ## 正式运行

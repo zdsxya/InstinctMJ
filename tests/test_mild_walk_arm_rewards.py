@@ -64,8 +64,10 @@ class ArmRewardTests(unittest.TestCase):
         self.assertNotIn("arm_reference_pitch", mild.rewards)
         self.assertNotIn("yaw_rate_error_l1", mild.rewards)
         self.assertEqual(mild.rewards["track_ang_vel_z_exp"].weight, 1.)
-        for task in ("Instinct-Locomotion-Flat-G1-v0", "Instinct-Locomotion-vae-G1-v0"):
-            self.assertNotIn("arm_reference_pitch", load_env_cfg(task).rewards)
+        from instinct_mj.tasks.locomotion.config.g1.mild_vae_env_cfg import instinct_g1_mild_vae_env_cfg
+
+        for cfg in (load_env_cfg("Instinct-Locomotion-Flat-G1-v0"), instinct_g1_mild_vae_env_cfg()):
+            self.assertNotIn("arm_reference_pitch", cfg.rewards)
 
     def test_reference_band_has_no_default_pose_target_and_is_mirror_symmetric(self):
         position = torch.tensor([[.2, -.3], [.1, -.4], [.2, -.3]])
